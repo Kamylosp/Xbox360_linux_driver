@@ -23,9 +23,9 @@ struct xpad_output_packet {
 int array [200];
 int n = 0;
 
+
 struct usb_xpad {
     struct input_dev *dev;
-	struct input_dev __rcu *x360w_dev;
 	struct usb_device *udev;
 	struct usb_interface *intf;
 
@@ -59,7 +59,7 @@ struct usb_xpad {
 	int packet_type;
 	int pad_nr;
 	int quirks;
-	const char *name;
+	char name[64];
 	struct work_struct work;
 	struct delayed_work poweroff_work;
 	time64_t mode_btn_down_ts;
@@ -71,7 +71,6 @@ struct usb_xpad {
 static void process_packet(struct usb_xpad *xpad, u16 cmd, unsigned char *data){
 	struct input_dev *dev = xpad->dev;
 
-
 	if (data[3]){
 		int valor = (int) data[3]>>4;
 		printk(KERN_INFO "Numero: %d", valor);
@@ -80,19 +79,22 @@ static void process_packet(struct usb_xpad *xpad, u16 cmd, unsigned char *data){
 		if (valor & 0b0001){
 			printk(KERN_INFO "A pressed");
 
-		} else if (valor & 0b0010){
+			input_report_key(xpad->dev, KEY_S, 1);
+
+		}if (valor & 0b0010){
 			printk(KERN_INFO "B pressed");
-
-		} else if (valor & 0b0100){
-			printk(KERN_INFO "X pressed");
-
-		} else if (valor & 0b1000){
-			printk(KERN_INFO "Y pressed");
-
-		} else {
-			printk("Neither");
 		}
+		if (valor & 0b0100){
+			printk(KERN_INFO "X pressed");
+		}
+		if (valor & 0b1000){
+			printk(KERN_INFO "Y pressed");
+		}
+	}else{
+		input_report_key(xpad->dev, KEY_S, 0);
 	}
+
+	input_sync(xpad->dev);
 }
 
 
@@ -102,9 +104,6 @@ static void xpad_irq_in(struct urb *urb)
 	struct device *dev = &xpad->intf->dev;
 
 	int status;
-
-
-	//printk(KERN_INFO "deu tudo certo");
 
 	status = urb->status;
 
@@ -127,7 +126,7 @@ static void xpad_irq_in(struct urb *urb)
 	}
 
 
-	print_hex_dump(KERN_DEBUG, "xpad-dbg: ", DUMP_PREFIX_OFFSET, 32, 1, xpad->idata, XPAD_PKT_LEN, 0);
+	//print_hex_dump(KERN_DEBUG, "xpad-dbg: ", DUMP_PREFIX_OFFSET, 32, 1, xpad->idata, XPAD_PKT_LEN, 0);
 
 	process_packet(xpad, 0, xpad->idata);
 
@@ -393,7 +392,30 @@ static int meu_driver_usb_probe(struct usb_interface *interface, const struct us
 
     printk(KERN_INFO "meu_driver_usb: O dispositivo idVendor=%X idProduct=%X foi connectado ao meu driver, interface=%X", id->idVendor, id->idProduct, interface->cur_altsetting->desc.bInterfaceNumber);
 
-    //int numendpoints = interface->cur_altsetting->desc.bNumEndpoints;
+
+	struct input_dev *input_dev;
+	input_dev = input_allocate_device();
+
+	minha_struct->dev = input_dev;
+
+
+	sprintf(minha_struct->name, "X360");
+	sprintf(minha_struct->phys, "/controle");
+
+
+	input_dev->name = minha_struct->name;
+	input_dev->phys = minha_struct->phys;
+
+	usb_to_input_id(udev, &input_dev->id);
+
+	input_set_drvdata(input_dev, minha_struct);
+
+
+	input_set_capability(input_dev, EV_KEY, KEY_S);
+
+
+	input_register_device(minha_struct->dev);
+
 	usb_set_intfdata(interface, minha_struct);
 	xpad360w_start_input(minha_struct);
 	
@@ -404,8 +426,25 @@ static int meu_driver_usb_probe(struct usb_interface *interface, const struct us
 // USB - Disconnect - Função de saída quando um dispositivo é desconectado
 static void meu_driver_usb_disconnect(struct usb_interface *interface)
 {
+	struct usb_xpad *minha_struct = usb_get_intfdata(interface);
+
 	printk(KERN_ALERT "Disconectando");
+
+	if (minha_struct){
+		//usb_kill_urb(minha_struct->interrupt);
+		input_unregister_device(minha_struct->dev);
+		//usb_free_urb(minha_struct->interrupt);
+		//usb_free_coherent(interface_to_usbdev(interface), 8, minha_struct->dma_mem, minha_struct->dmaaddr);
+		kfree(minha_struct);
+	}
+
+
 }
+
+
+
+
+
 
 // USB - Tabela de dispositivos 
 static struct usb_device_id minha_tabela_usb[] =
@@ -445,6 +484,8 @@ static int __init meu_modulo_init(void)
 // Finalização do modulo
 static void __exit meu_modulo_exit(void)
 {
+
+
     // Desregistrando o dispositivo USB
     usb_deregister(&meu_driver_usb);
 }
