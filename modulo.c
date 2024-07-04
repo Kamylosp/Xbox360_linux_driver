@@ -69,30 +69,216 @@ struct usb_xpad {
 
 
 static void process_packet(struct usb_xpad *xpad, u16 cmd, unsigned char *data){
-	struct input_dev *dev = xpad->dev;
 
-	if (data[3]){
-		int valor = (int) data[3]>>4;
-		printk(KERN_INFO "Numero: %d", valor);
+	// ----------------- LETRAS -----------------
 
-
-		if (valor & 0b0001){
-			printk(KERN_INFO "A pressed");
-
-			input_report_key(xpad->dev, KEY_S, 1);
-
-		}if (valor & 0b0010){
-			printk(KERN_INFO "B pressed");
-		}
-		if (valor & 0b0100){
-			printk(KERN_INFO "X pressed");
-		}
-		if (valor & 0b1000){
-			printk(KERN_INFO "Y pressed");
-		}
-	}else{
-		input_report_key(xpad->dev, KEY_S, 0);
+	if ((int)data[3] & 0b00010000){		// A pressed
+		input_report_key(xpad->dev, KEY_LEFTCTRL , 1);
+		input_report_key(xpad->dev, KEY_C , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_LEFTCTRL , 0);
+		input_report_key(xpad->dev, KEY_C , 0);
 	}
+
+	if ((int)data[3] & 0b00100000){		// B pressed
+		input_report_key(xpad->dev, KEY_LEFTCTRL , 1);
+		input_report_key(xpad->dev, KEY_V , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_LEFTCTRL , 0);
+		input_report_key(xpad->dev, KEY_V , 0);
+	}
+
+	if ((int)data[3] & 0b01000000){		// X pressed
+		input_report_key(xpad->dev, KEY_LEFTCTRL , 1);
+		input_report_key(xpad->dev, KEY_Z , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_LEFTCTRL , 0);
+		input_report_key(xpad->dev, KEY_Z , 0);
+	}
+
+	if ((int)data[3] & 0b10000000){		// Y pressed
+		input_report_key(xpad->dev, KEY_SPACE , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_SPACE , 0);
+	}
+
+	// ----------------- DIRECIONAIS -----------------
+
+	if ((int)data[2] & 0b0001){		// Direcional -> Up
+		input_report_key(xpad->dev, KEY_UP , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_UP , 0);
+	}
+
+	if ((int)data[2] & 0b0010){		// Direcional -> Down
+		input_report_key(xpad->dev, KEY_DOWN , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_DOWN , 0);
+	}
+
+	if ((int)data[2] & 0b0100){		// Direcional -> Esq
+		input_report_key(xpad->dev, KEY_LEFT , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_LEFT , 0);
+	}
+
+	if ((int)data[2] & 0b1000){		// Direcional -> Dir
+		input_report_key(xpad->dev, KEY_RIGHT , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_RIGHT , 0);
+	}
+
+	// ----------------- LB e RB -----------------
+
+	if ((int)data[3] & 0b01){		// LB
+		input_report_key(xpad->dev, KEY_LEFTSHIFT , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_LEFTSHIFT , 0);
+	}
+
+	if ((int)data[3] & 0b10){		// RB
+		input_report_key(xpad->dev, KEY_BACKSPACE , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_BACKSPACE , 0);
+	}
+
+	// ----------------- LT e RT -----------------
+
+	if ((int)data[4] & 255){		// LT
+		input_report_key(xpad->dev, KEY_LEFTALT , 1);
+		input_report_key(xpad->dev, KEY_TAB , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_LEFTALT , 0);
+		input_report_key(xpad->dev, KEY_TAB , 0);
+	}
+
+	if ((int)data[5] & 255){		// RT
+		input_report_key(xpad->dev, KEY_ENTER , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_ENTER , 0);
+	}
+
+	// ----------------- Analógicos -----------------
+	/*
+	 * 		<: 128    o: 255		id left: 7			id right: 11
+	 * 		>: 127    o: 0			id left: 7			id right: 11
+	 * 		^: 127    o: 0			id left: 9			id right: 13
+	 * 		v: 128    o: 255		id left: 9			id right: 13
+	 * */
+
+	if ((int)data[7] == 128  &&  (int)data[11] == 128)	// <<
+		input_report_key(xpad->dev, KEY_A , 1);
+	else
+		input_report_key(xpad->dev, KEY_A , 0);
+
+	if ((int)data[7] == 128  &&  (int)data[11] == 127)	// <>
+		input_report_key(xpad->dev, KEY_I , 1);
+	else
+		input_report_key(xpad->dev, KEY_I , 0);
+
+	if ((int)data[7] == 128  &&  (int)data[13] == 127)	// <^
+		input_report_key(xpad->dev, KEY_E , 1);
+	else
+		input_report_key(xpad->dev, KEY_E , 0);
+
+	if ((int)data[7] == 128  &&  (int)data[13] == 128)	// <v
+		input_report_key(xpad->dev, KEY_O , 1);
+	else
+		input_report_key(xpad->dev, KEY_O , 0);
+
+
+
+	if ((int)data[7] == 127  &&  (int)data[11] == 128)	// ><
+		input_report_key(xpad->dev, KEY_L , 1);
+	else
+		input_report_key(xpad->dev, KEY_L , 0);
+
+	if ((int)data[7] == 127  &&  (int)data[11] == 127)	// >>
+		input_report_key(xpad->dev, KEY_N , 1);
+	else
+		input_report_key(xpad->dev, KEY_N , 0);
+
+	if ((int)data[7] == 127  &&  (int)data[13] == 127)	// >^
+		input_report_key(xpad->dev, KEY_S , 1);
+	else
+		input_report_key(xpad->dev, KEY_S , 0);
+
+	if ((int)data[7] == 127  &&  (int)data[13] == 128)	// >v
+		input_report_key(xpad->dev, KEY_K , 1);
+	else
+		input_report_key(xpad->dev, KEY_K , 0);
+
+
+
+	if ((int)data[9] == 128  &&  (int)data[11] == 128)	// v<
+		input_report_key(xpad->dev, KEY_P , 1);
+	else
+		input_report_key(xpad->dev, KEY_P , 0);
+
+	if ((int)data[9] == 128  &&  (int)data[11] == 127)	// v>
+		input_report_key(xpad->dev, KEY_C , 1);
+	else
+		input_report_key(xpad->dev, KEY_C , 0);
+
+	if ((int)data[9] == 128  &&  (int)data[13] == 127)	// v^
+		input_report_key(xpad->dev, KEY_R , 1);
+	else
+		input_report_key(xpad->dev, KEY_R , 0);
+
+	/*if ((int)data[9] == 128  &&  (int)data[13] == 128)	// vv
+		input_report_key(xpad->dev, KEY_O , 1);
+	else
+		input_report_key(xpad->dev, KEY_O , 0);*/
+
+
+
+	if ((int)data[9] == 127  &&  (int)data[11] == 128)	// ^<
+		input_report_key(xpad->dev, KEY_M , 1);
+	else
+		input_report_key(xpad->dev, KEY_M , 0);
+
+	if ((int)data[9] == 127  &&  (int)data[11] == 127)	// ^>
+		input_report_key(xpad->dev, KEY_T , 1);
+	else
+		input_report_key(xpad->dev, KEY_T , 0);
+
+	if ((int)data[9] == 127  &&  (int)data[13] == 127)	// ^^
+		input_report_key(xpad->dev, KEY_Y , 1);
+	else
+		input_report_key(xpad->dev, KEY_Y , 0);
+/*
+	if ((int)data[9] == 127  &&  (int)data[13] == 128)	// ^v
+		input_report_key(xpad->dev, KEY_S , 1);
+	else
+		input_report_key(xpad->dev, KEY_S , 0);*/
+
+
+/*
+	if ((int)data[7])
+		printk(KERN_INFO "analog: %d", (int)data[7]);
+
+	if ((int)data[7] == 128)
+		printk(KERN_INFO "<<<");
+	else if ((int)data[7] > 128 && (int)data[7] < 200)
+		printk(KERN_INFO "<<");
+	else if ((int)data[7] > 200 && (int)data[7] < 255)
+		printk(KERN_INFO "<");
+
+	if ((int)data[7] < 80 && (int)data[7] > 0)
+		printk(KERN_INFO ">");
+	else if ((int)data[7] > 80 && (int)data[7] < 127)
+		printk(KERN_INFO ">>");
+	else if ((int)data[7] == 127)
+		printk(KERN_INFO ">>>");
+
+	if ((int)data[3] & 0b00010000){		// A pressed
+		input_report_key(xpad->dev, KEY_UP , 1);
+		input_report_key(xpad->dev, KEY_ENTER , 1);
+	} else {
+		input_report_key(xpad->dev, KEY_UP , 0);
+		input_report_key(xpad->dev, KEY_ENTER , 0);
+	}
+*/
 
 	input_sync(xpad->dev);
 }
@@ -130,8 +316,8 @@ static void xpad_irq_in(struct urb *urb)
 
 	process_packet(xpad, 0, xpad->idata);
 
-	int error;
-	error = usb_submit_urb(xpad->irq_in, GFP_KERNEL);
+	//int error;
+	usb_submit_urb(xpad->irq_in, GFP_KERNEL);
 }
 
 
@@ -334,6 +520,44 @@ static int xpad_init_output(struct usb_interface *intf, struct usb_xpad *xpad,
 	return 0;
 }
 
+void set_capability_keys(struct input_dev *input_dev){
+
+	input_set_capability(input_dev, EV_KEY, KEY_LEFTCTRL);
+
+	input_set_capability(input_dev, EV_KEY, KEY_C);
+	input_set_capability(input_dev, EV_KEY, KEY_V);
+	input_set_capability(input_dev, EV_KEY, KEY_Z);
+
+
+	input_set_capability(input_dev, EV_KEY, KEY_A);
+	input_set_capability(input_dev, EV_KEY, KEY_L);
+	input_set_capability(input_dev, EV_KEY, KEY_I);
+	input_set_capability(input_dev, EV_KEY, KEY_S);
+	input_set_capability(input_dev, EV_KEY, KEY_O);
+	input_set_capability(input_dev, EV_KEY, KEY_N);
+	input_set_capability(input_dev, EV_KEY, KEY_K);
+	input_set_capability(input_dev, EV_KEY, KEY_A);
+	input_set_capability(input_dev, EV_KEY, KEY_M);
+	input_set_capability(input_dev, EV_KEY, KEY_Y);
+	input_set_capability(input_dev, EV_KEY, KEY_T);
+	input_set_capability(input_dev, EV_KEY, KEY_P);
+	input_set_capability(input_dev, EV_KEY, KEY_R);
+	input_set_capability(input_dev, EV_KEY, KEY_C);
+
+
+	input_set_capability(input_dev, EV_KEY, KEY_DOWN);
+	input_set_capability(input_dev, EV_KEY, KEY_UP);
+	input_set_capability(input_dev, EV_KEY, KEY_LEFT);
+	input_set_capability(input_dev, EV_KEY, KEY_RIGHT);
+
+	input_set_capability(input_dev, EV_KEY, KEY_LEFTSHIFT);
+	input_set_capability(input_dev, EV_KEY, KEY_BACKSPACE);
+	input_set_capability(input_dev, EV_KEY, KEY_LEFTALT);
+	input_set_capability(input_dev, EV_KEY, KEY_TAB);
+	input_set_capability(input_dev, EV_KEY, KEY_ENTER);
+	input_set_capability(input_dev, EV_KEY, KEY_SPACE);
+
+}
 
 
 // USB - Probe - Função de entrada quando um novo dispositivo é reconhecido para este modulo
@@ -343,7 +567,8 @@ static int meu_driver_usb_probe(struct usb_interface *interface, const struct us
 
     struct usb_xpad *minha_struct;
     struct usb_device *udev = interface_to_usbdev(interface);
-    struct usb_endpoint_descriptor *ep_irq_in = NULL, *ep_irq_out = NULL;
+    struct usb_endpoint_descriptor *ep_irq_in = NULL;
+	struct input_dev *input_dev;
 
 
     minha_struct = kzalloc(sizeof(struct usb_xpad), GFP_KERNEL);
@@ -393,15 +618,12 @@ static int meu_driver_usb_probe(struct usb_interface *interface, const struct us
     printk(KERN_INFO "meu_driver_usb: O dispositivo idVendor=%X idProduct=%X foi connectado ao meu driver, interface=%X", id->idVendor, id->idProduct, interface->cur_altsetting->desc.bInterfaceNumber);
 
 
-	struct input_dev *input_dev;
 	input_dev = input_allocate_device();
 
 	minha_struct->dev = input_dev;
 
-
 	sprintf(minha_struct->name, "X360");
 	sprintf(minha_struct->phys, "/controle");
-
 
 	input_dev->name = minha_struct->name;
 	input_dev->phys = minha_struct->phys;
@@ -410,15 +632,13 @@ static int meu_driver_usb_probe(struct usb_interface *interface, const struct us
 
 	input_set_drvdata(input_dev, minha_struct);
 
-
-	input_set_capability(input_dev, EV_KEY, KEY_S);
-
+	//input_set_capability(input_dev, EV_KEY, KEY_S);
+	set_capability_keys(input_dev);
 
 	input_register_device(minha_struct->dev);
 
 	usb_set_intfdata(interface, minha_struct);
 	xpad360w_start_input(minha_struct);
-	
 
     return retval;
 }
@@ -431,20 +651,10 @@ static void meu_driver_usb_disconnect(struct usb_interface *interface)
 	printk(KERN_ALERT "Disconectando");
 
 	if (minha_struct){
-		//usb_kill_urb(minha_struct->interrupt);
 		input_unregister_device(minha_struct->dev);
-		//usb_free_urb(minha_struct->interrupt);
-		//usb_free_coherent(interface_to_usbdev(interface), 8, minha_struct->dma_mem, minha_struct->dmaaddr);
 		kfree(minha_struct);
 	}
-
-
 }
-
-
-
-
-
 
 // USB - Tabela de dispositivos 
 static struct usb_device_id minha_tabela_usb[] =
@@ -484,8 +694,6 @@ static int __init meu_modulo_init(void)
 // Finalização do modulo
 static void __exit meu_modulo_exit(void)
 {
-
-
     // Desregistrando o dispositivo USB
     usb_deregister(&meu_driver_usb);
 }
@@ -496,10 +704,7 @@ module_init(meu_modulo_init);
 // Exitpoint - A função que deve deinicializar o modulo
 module_exit(meu_modulo_exit);
 
-
-
 // Informações do Modulo
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Elison Maiko, Italo Kusmin e Kamylo Porto");
 MODULE_DESCRIPTION("Nosso modulo USB");
-
