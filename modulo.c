@@ -528,7 +528,6 @@ void set_capability_keys(struct input_dev *input_dev){
 	input_set_capability(input_dev, EV_KEY, KEY_V);
 	input_set_capability(input_dev, EV_KEY, KEY_Z);
 
-
 	input_set_capability(input_dev, EV_KEY, KEY_A);
 	input_set_capability(input_dev, EV_KEY, KEY_L);
 	input_set_capability(input_dev, EV_KEY, KEY_I);
@@ -536,14 +535,13 @@ void set_capability_keys(struct input_dev *input_dev){
 	input_set_capability(input_dev, EV_KEY, KEY_O);
 	input_set_capability(input_dev, EV_KEY, KEY_N);
 	input_set_capability(input_dev, EV_KEY, KEY_K);
-	input_set_capability(input_dev, EV_KEY, KEY_A);
+	input_set_capability(input_dev, EV_KEY, KEY_E);
 	input_set_capability(input_dev, EV_KEY, KEY_M);
 	input_set_capability(input_dev, EV_KEY, KEY_Y);
 	input_set_capability(input_dev, EV_KEY, KEY_T);
 	input_set_capability(input_dev, EV_KEY, KEY_P);
 	input_set_capability(input_dev, EV_KEY, KEY_R);
 	input_set_capability(input_dev, EV_KEY, KEY_C);
-
 
 	input_set_capability(input_dev, EV_KEY, KEY_DOWN);
 	input_set_capability(input_dev, EV_KEY, KEY_UP);
